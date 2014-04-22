@@ -24,6 +24,7 @@
 				settings['highlighter_color'] = safari.extension.settings['highlighter_color'];
 				settings['from_email'] = safari.extension.settings['from_email'];
 				settings['coda_notes_serial_number'] = safari.extension.settings['coda_notes_serial_number'];
+				settings['submitURL'] = safari.extension.settings['submitURL'];
 				return settings;
 			}
 			
@@ -38,9 +39,14 @@
 			function performCommand(event) {
 /* 				console.log('performing: ' + event.command); */
 				if (event.command === 'enableBar') {
-					var index;
-					
-					safari.application.activeBrowserWindow.activeTab.page.dispatchMessage("enableBar");
+					if (safari.extension.settings['submitURL'] == undefined ||
+							safari.extension.settings['submitURL'] == 'http://your.domain.com/submit.php') {
+						safari.application.activeBrowserWindow.openTab().url = safari.extension.baseURI+'submit.html';
+					}
+					else {
+						var index;
+						safari.application.activeBrowserWindow.activeTab.page.dispatchMessage("enableBar");
+					}	
 				}
 			}
 			

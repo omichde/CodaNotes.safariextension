@@ -1,0 +1,123 @@
+<html>
+<head>
+	<title></title>
+	<meta http-equiv="Content-Type" content="text/html;charset=utf8" />
+	<style type="text/css">
+	.code {
+		overflow: scroll;
+		width: 90%;
+		height: 200px;
+		left: 5%;
+		position: relative;
+		padding: 5px;
+		background-color: #fafafa;
+		border: 1px solid #999;
+		border-radius: 5px;
+	}
+	pre { margin: 0}
+	</style>
+	<script type="text/javascript">
+    function selectText(id) {
+      if (document.selection) {
+        var range = document.body.createTextRange();
+        range.moveToElementText (document.getElementById(id));
+        range.select();
+      }
+      else if (window.getSelection) {
+        var range = document.createRange();
+        range.selectNode (document.getElementById(id));
+        window.getSelection().addRange(range);
+      }
+    }
+	</script>
+</head>
+
+<body style="background-color: #656565; padding: 10px">
+
+	<div style="background: white; font: 13px/18px Helvetica, sans-serif; padding: 50px 15px 30px 15px;">
+		<h2>Submit setup</h2>
+		<p><em>1st step:</em> in order to send your emails you must provide an URL for the submitting PHP script first. Please copy the following script to your web server and copy its URL into the Settings of Coda Notes.</p>
+	<div id="script" class="code" onclick="selectText('script');"><pre>&lt;?php 
+header ("Access-Control-Allow-Origin: *");
+header ("Content-Type: application/json");
+
+$emailPattern = "/([\w\-]+\@[\w\-]+\.[\w\-]+)/";
+
+$to = utf8_decode($_POST["to"]);
+if (!preg_match ($emailPattern, $to))
+	die (json_encode(["code" => 1,
+		"result" => "Invalid recipient",
+		"more" => "Please verify your recipient email."]));
+
+$from = utf8_decode($_POST["from"]);
+if (!preg_match ($emailPattern, $from))
+	die (json_encode(["code" => 1,
+		"result" => "Invalid sender",
+		"more" => "Please verify your sender email."]));
+
+$subject = utf8_decode($_POST["subj"]);
+if (strlen($subject) != strlen($_POST["subj"]))
+	$subject = "=?ISO-8859-1?Q?".$subject."?=";
+
+$id = md5(uniqid(time(), true));
+
+$header["From"] = $header["Reply-To"] = $from; 
+$header["Content-Transfer-Encoding"] = "quoted-printable";
+$header["Mime-Version"] = "1.0";
+$header["Content-Type"] = "multipart/mixed; boundary=\"$id\"";
+
+if (file_exists("email.html")) {
+	$html = trim(implode("\n", file("email.html")));
+	if (strlen($_POST["comments"]))
+		$html = str_replace("&lt;!--{COMMENT}--&gt;", nl2br(htmlentities($_POST["comments"])), $html);
+	$html = str_replace("&lt;!--{URL}--&gt;", $_POST["url"], $html);
+	$mess = "--$id\nContent-Transfer-Encoding: quoted-printable\nContent-Type: text/html; charset=utf-8\n\n";
+	$mess .= quoted_printable_encode(str_replace("{IMAGEDATA}", $_POST["image"], $html))."\n\n";
+	$mess .= "--$id--";
+}
+else {
+	$mess = "--$id\nContent-Transfer-Encoding: quoted-printable\nContent-Type: text/plain; charset=utf-8\n\n";
+	if (strlen($_POST["comments"]))
+		$mess .= quoted_printable_encode($_POST["comments"])."\n\n";
+	$mess .= quoted_printable_encode($_POST["url"])."\n\n";
+	$mess .= "--$id\nContent-Disposition: attachment; filename=\"image.png\"\nContent-Type: image/png; name=\"image.png\"\nContent-Transfer-Encoding: base64\n\n";
+	$mess .= chunk_split ($_POST["image"])."\n\n";
+	$mess .= "--$id--";
+}
+
+$head = "";
+foreach ($header as $k => $v)
+	$head .= "\n".$k.":".$v;
+$head = substr($head, 1);
+
+if ($_POST["copyMe"])
+	mail ($from, $subject, $mess, $head);
+
+if (mail ($to, $subject, $mess, $head))
+	die (json_encode(["code" => 0]));
+else
+	die (json_encode(["code" => 1,
+		"result" => "Error sending email",
+		"more" => "Something went wrong with this email."]));
+?&gt;</pre></div>
+	<p>This script needs PHP 5.2 or above on a web server with mail feature enabled.</p>
+	<p><em>2nd step:</em> the HTML email you send needs a small template file. Save the following code as <code>email.html</code> alongside the submission script.</p>
+	<div id="template" class="code" onclick="selectText('template');"><pre>&lt;html&gt;
+&lt;head&gt;
+	&lt;meta http-equiv="Content-Type" content="text/html;charset=utf8" /&gt;
+&lt;/head&gt;
+&lt;body style="background-color:#656565;padding:10px"&gt;
+	&lt;div style="background:white;font:13px/18px Helvetica,sans-serif;padding:50px 15px 30px 15px;"&gt;
+		&lt;a href="&lt;!--{URL}--&gt;"&gt;&lt;!--{URL}--&gt;&lt;/a&gt;&lt;/p&gt;
+		&lt;p&gt;&lt;!--{COMMENT}--&gt;&lt;/p&gt;
+		&lt;img src="data:image/png;base64,{IMAGEDATA}" style="max-width:100%;margin:10px 0"&gt;
+		&lt;p&gt;You can &lt;b&gt;annotate websites&lt;/b&gt; like this by installing the
+		&lt;a href="http://panic.com/codanotes/"&gt;Coda Notes Safari extension&lt;/a&gt;.
+		Then, &lt;b&gt;edit the website&lt;/b&gt; in &lt;a href="http://panic.com"&gt;Coda&lt;/a&gt;!&lt;/p&gt;
+	&lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre></div>
+</div>
+
+</body>
+</html>

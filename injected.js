@@ -439,7 +439,7 @@ function send() {
 	
 	var checkSendingTimeout = setTimeout(checkSending, 2000);
 
-	$.post("http://panic.com/codanotes/notes-send.php", $('form').serialize(), function(data, textStatus, request){
+	$.post(settings['submitURL'], $('form').serialize(), function(data, textStatus, request){
 		var failed = false;
 		var title = 'Uh oh';
 		var message = 'We had some trouble sending your notes. Maybe try again later?';

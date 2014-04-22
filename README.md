@@ -18,6 +18,12 @@ And let’s not forget cool thing #2: **we literally added a new feature to Safa
 
 Thanks to Apple for letting us play with Safari Extensions, and thanks to [Neven](https://twitter.com/mrgan‎) and [Garrett](https://twitter.com/garrettmoon) for such great quick work on this project.
 
+## Submit Setup
+
+This fork of Coda Notes contains a custom PHP submission script and changes to the extension itself to facilitate sending your notes through your own server. This extra feature comes at the cost of two little setup steps explained within the extension itself.
+
+Caution: take special care that this submission script sends emails to any recipient through your server and hence may be misused for spamming. Further action may be needed to prevent this.
+
 ## License
 
 Coda Notes is distributed under a modified version of the MIT License. See LICENSE for more information.
